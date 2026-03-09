@@ -40,4 +40,13 @@ export class ApiService {
         const res = await fetch(`/api/gee/point?lat=${lat}&lon=${lon}`);
         return await res.json();
     }
+    // 8. ★ 新增：发送圈选多边形到后端计算面积
+    static async getPolygonStats(geometry, year) {
+        const res = await fetch('/api/gee/polygon', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ geometry: geometry, year: year })
+        });
+        return await res.json();
+    }
 }

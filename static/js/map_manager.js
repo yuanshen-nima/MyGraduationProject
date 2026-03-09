@@ -49,7 +49,7 @@ export class MapManager {
         this._addCustomControls();
         this._renderLegend();
         this._loadLulcData(this.currentYear);
-
+        
         // 5. ★★★ 核心交互：地图点击触发 GEE 云端时序计算 ★★★
         this.map.on('click', async (e) => {
             const lat = e.latlng.lat;

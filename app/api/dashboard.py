@@ -58,7 +58,6 @@ def get_gee_tile():
         return jsonify({'url': tile_url})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-
 @bp.route('/gee/point', methods=['GET'])
 def get_gee_point():
     try:
@@ -67,7 +66,35 @@ def get_gee_point():
         if lat is None or lon is None:
             return jsonify({'error': '缺少坐标参数'}), 400
             
+        # 1. 调用 gee_service 计算生态指数 (NDVI, BSI 等)
         data = gee_service.get_point_time_series(lat, lon)
+        
+        # 2. 调用 land_use_service 进行随机森林土地分类推演
+        lulc_history = land_service.get_point_land_use_history(lat, lon, gee_service)
+        
+        # 3. 将地物分类合并进返回数据
+        data['LULC'] = lulc_history
+        
         return jsonify(data)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+@bp.route('/gee/polygon', methods=['POST'])
+def get_gee_polygon_stats():
+    """接收前端画出的多边形，返回该区域的地物统计"""
+    try:
+        data = request.json
+        coords = data.get('geometry') # GeoJSON 坐标数组
+        year = data.get('year', 2025)
+        
+        if not coords:
+            return jsonify({'error': '缺少空间几何数据'}), 400
+            
+        # 调用刚才写好的统计方法
+        stats = land_service.get_polygon_statistics(coords, year, gee_service)
+        
+        if isinstance(stats, dict) and 'error' in stats:
+            return jsonify(stats), 500
+            
+        return jsonify({'stats': stats})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
