@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>荒漠化监测与可视化系统 (专业版)</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/digidem/leaflet-side-by-side@gh-pages/leaflet-side-by-side.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+</head>
+<body>
+
+    <div class="header">
+        <div class="logo">
+            <span style="font-size: 24px; margin-right: 10px;">🌍</span>
+            荒漠化监测与可视化系统 <span style="font-size: 12px; background:#e74c3c; padding:2px 6px; border-radius:4px; margin-left:10px;">PRO</span>
+        </div>
+        <div class="info">🎓 毕业设计 | 学生：梁伯钰</div>
+    </div>
+
+    <div class="main-container">
+        <div class="sidebar-nav">
+            <div class="nav-item" data-target="stats" title="土地利用统计">
+                <i class="fa-solid fa-chart-pie"></i>
+            </div>
+            <div class="nav-item" data-target="indices" title="生态指标分析">
+                <i class="fa-solid fa-seedling"></i>
+            </div>
+            <div class="nav-item" data-target="analysis" title="演变分析 (卷帘/桑基图)">
+                <i class="fa-solid fa-code-compare"></i>
+            </div>
+            <div class="nav-item" data-target="video" title="时序演变动画">
+                <i class="fa-solid fa-film"></i>
+            </div>
+            <div class="nav-item" data-target="info" title="系统说明">
+                <i class="fa-solid fa-circle-info"></i>
+            </div>
+        </div>
+
+        <div class="sidebar-panel" id="sidebarPanel">
+            <div class="panel-header">
+                <div class="panel-title" id="panelTitle">
+                    <i class="fa-solid fa-chart-pie"></i> 统计分析
+                </div>
+                <div class="panel-tools" id="panelTools">
+                    <span class="tool-btn" data-action="bar" title="切换柱状图"><i class="fa-solid fa-chart-column"></i></span>
+                    <span class="tool-btn" data-action="line" title="切换折线图"><i class="fa-solid fa-chart-line"></i></span>
+                    <span class="tool-btn" data-action="restore" title="还原视图"><i class="fa-solid fa-rotate-right"></i></span>
+                    <span class="tool-btn" data-action="save" title="下载图片"><i class="fa-solid fa-download"></i></span>
+                </div>
+                <div class="close-btn" id="closeSidebar"><i class="fa-solid fa-xmark"></i></div>
+            </div>
+            
+            <div id="content-stats" class="panel-content">
+                <div id="statsChart" class="chart-box"></div>
+                <div class="chart-tip"><i class="fa-solid fa-lightbulb"></i> 提示：拖动面板右边缘可调整图表宽度。</div>
+                <hr style="border:0; border-top:1px solid #eee; margin:20px 0;">
+                <h4 style="margin:0 0 15px 0; color:#2c3e50; font-size: 15px;">
+                    <i class="fa-solid fa-chart-pie"></i> 年度占比概览 (Pie Charts)
+                </h4>
+                <div id="pieGrid" class="pie-grid"></div>
+            </div>
+
+            <div id="content-indices" class="panel-content">
+                <div id="indicesChart" class="chart-box"></div>
+                <hr style="border:0; border-top:1px solid #eee; margin:20px 0;">
+                <h4 style="margin:0 0 10px 0; color:#2c3e50;">🧠 智能分析</h4>
+                <button id="predictBtn" class="predict-btn">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i> 启动 2030 趋势预测
+                </button>
+            </div>
+
+            <div id="content-analysis" class="panel-content">
+                <h3 style="color:#2c3e50; border-bottom:2px solid #3498db; padding-bottom:10px; margin-top:0;">
+                    🔍 土地演变分析
+                </h3>
+
+                <div class="analysis-section">
+                    <h4>1. 时空变化对比 (Swipe)</h4>
+                    <p style="font-size:13px; color:#666;">拖动中间的分割线，直观对比两个年份的差异。</p>
+                    <div class="control-row">
+                        <select id="swipeLeftYear" class="year-select-sm">
+                            <option value="2000">2000年 (左)</option>
+                            <option value="2010">2010年</option>
+                        </select>
+                        <span style="color:#aaa; font-weight:bold;">VS</span>
+                        <select id="swipeRightYear" class="year-select-sm">
+                            <option value="2025" selected>2025年 (右)</option>
+                            <option value="2020">2020年</option>
+                        </select>
+                    </div>
+                    <button id="btnToggleSwipe" class="action-btn">
+                        <i class="fa-solid fa-up-right-from-square"></i> 开启/关闭 卷帘模式
+                    </button>
+                </div>
+
+                <div class="analysis-section" style="margin-top:20px;">
+                    <h4>2. 土地利用转移矩阵 (Sankey)</h4>
+                    <p style="font-size:13px; color:#666;">展示土地类型的流入流出情况。</p>
+                    <div class="control-row">
+                        <select id="sankeyStartYear" class="year-select-sm">
+                            <option value="2000">2000年</option>
+                            <option value="2010">2010年</option>
+                        </select>
+                        <i class="fa-solid fa-arrow-right" style="color:#aaa"></i>
+                        <select id="sankeyEndYear" class="year-select-sm">
+                            <option value="2025" selected>2025年</option>
+                            <option value="2020">2020年</option>
+                        </select>
+                    </div>
+                    <button id="btnGenSankey" class="action-btn" style="background:#8e44ad;">
+                        <i class="fa-solid fa-diagram-project"></i> 生成桑基图
+                    </button>
+                    <div id="sankeyChart" class="chart-box" style="height:400px; margin-top:15px; border:1px solid #eee;"></div>
+                </div>
+            </div>
+
+            <div id="content-video" class="panel-content">
+                <h3 style="color:#2c3e50; margin-top:0; border-bottom:2px solid #3498db; padding-bottom:10px; display:inline-block;">🎥 30年生态演变重现</h3>
+                <p style="color:#666; font-size:14px;">基于 Google Earth Engine 生成的 1995-2025 年时序动画。</p>
+                <div class="video-wrapper">
+                    <video controls width="100%" autoplay loop muted>
+                        <source src="{{ url_for('static', filename='media/LULC_TimeSeries_Animation.mp4') }}" type="video/mp4">
+                    </video>
+                </div>
+                <div class="video-legend">
+                    <h4>🗺️ 视频颜色对照表：</h4>
+                    <ul class="legend-list">
+                        <li><span class="dot" style="background:#1cece0"></span> <b>水体 (青色)</b></li>
+                        <li><span class="dot" style="background:#0db21f"></span> <b>植被 (深绿)</b></li>
+                        <li><span class="dot" style="background:#00ff00"></span> <b>耕地 (亮绿)</b></li>
+                        <li><span class="dot" style="background:#f0f015"></span> <b>沙地 (黄色)</b></li>
+                        <li><span class="dot" style="background:#ff0000"></span> <b>城镇 (红色)</b></li>
+                        <li><span class="dot" style="background:#979a5d"></span> <b>裸地 (褐色)</b></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div id="content-info" class="panel-content">
+                <h3>系统简介</h3>
+                <p>基于 GEE + Flask + Leaflet 的毕设系统。</p>
+            </div>
+
+            <div class="panel-resizer" id="panelResizer"><div class="handle-grip"></div></div>
+        </div>
+
+        <div id="map-container">
+            <div id="map"></div>
+            <div class="legend" id="legendBox"></div>
+        </div>
+    </div>
+
+    <script type="module" src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

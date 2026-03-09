@@ -1,0 +1,41 @@
+### Python 常用过滤 ###
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+build/
+dist/
+*.egg-info/
+
+### Flask 特定过滤 ###
+instance/
+.webassets-cache
+.env
+.flaskenv
+
+### GIS/数据文件过滤 (重点) ###
+# 建议将大型原始数据集存放在 data/ 目录下并排除
+data/
+# 排除常见的地理空间临时文件
+*.shp.xml
+*.log
+*.qlr
+*.lock
+# 如果你的 .tif 或 .shp 文件非常大，建议取消下面注释，仅通过代码加载
+# *.tif
+# *.shp
+# *.dbf
+
+### 浏览器与开发环境 ###
+.vscode/
+.idea/
+.DS_Store
+*.log
+node_modules/
+
+### 毕业项目可能产生的临时文件 ###
+temp/
+output/
+results/
